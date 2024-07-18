@@ -19,7 +19,8 @@ print(f"AWS Secret Access Key: {aws_secret_access_key}")
 
 # Capitalize the first letter of the domain name
 source_identifier = args.domain.capitalize()[0]
-print(f"Source Identifier: {source_identifier}")
+source_identifier_fullname = args.domain
+print(f"Source Identifier: {source_identifier_fullname}")
 
 region_name = 'us-west-1'
 
@@ -92,7 +93,7 @@ for widget in dashboard_body.get('widgets', []):
             print(count_source)
 
             if count_source < 50:
-                new_source = f"SOURCE '{source_identifier}'"
+                new_source = f"SOURCE '{source_identifier_fullname}'"
                 if new_source not in query_in_list:
                     query_in_list.insert(count_source, new_source)
 

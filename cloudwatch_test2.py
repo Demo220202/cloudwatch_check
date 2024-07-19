@@ -93,7 +93,7 @@ for widget in dashboard_body.get('widgets', []):
             print(count_source)
 
             if count_source < 50:
-                new_source = f"SOURCE '{source_identifier_fullname}'"
+                new_source = f"SOURCE '{source_identifier_fullname}'" # to be changed to f"SOURCE 'PhpAppLogs_{source_identifier_fullname}'" in prod level
                 if new_source not in query_in_list:
                     query_in_list.insert(count_source, new_source)
 

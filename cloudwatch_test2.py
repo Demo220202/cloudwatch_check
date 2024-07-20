@@ -22,7 +22,7 @@ source_identifier = args.domain.capitalize()[0]
 source_identifier_fullname = args.domain
 print(f"Source Identifier: {source_identifier_fullname}")
 
-region_name = 'us-west-1'
+region_name = 'us-west-2'
 
 # Initialize a boto3 session
 session = boto3.Session(
@@ -53,7 +53,7 @@ for dashboard in dashboards:
 
 print(list_all_dashboard)
 
-title_to_skip = "SSO Conf Error"
+title_to_skip = ["SSO Conf Error"]
 
 dashboard_use = ""
 
@@ -75,11 +75,13 @@ except client.exceptions.ResourceNotFoundException:
     exit(1)
 
 updated = False
-count_source = 0
+# count_source = 0
 
 for widget in dashboard_body.get('widgets', []):
+    print()
+    count_source = 0
     if widget['type'] == 'log':
-        if widget['properties'].get('title') != title_to_skip:
+        if widget['properties'].get('title') not in title_to_skip:
             query = widget['properties'].get('query', '')
             print(f"Old Query: {query}")
 
@@ -93,20 +95,27 @@ for widget in dashboard_body.get('widgets', []):
             print(count_source)
 
             if count_source < 50:
-                new_source = f"SOURCE '{source_identifier_fullname}'" # to be changed to f"SOURCE 'PhpAppLogs_{source_identifier_fullname}'" in prod level
+                new_source = f"SOURCE 'PhpAppLogs_{source_identifier_fullname}'" # to be changed to f"SOURCE 'PhpAppLogs_{source_identifier_fullname}'" in prod level
                 if new_source not in query_in_list:
                     query_in_list.insert(count_source, new_source)
 
-                print(query_in_list)
+                    print(query_in_list)
+    
+                    new_query = ' | '.join(query_in_list)
+                    print(new_query)
+    
+                    widget['properties']['query'] = new_query
+                    updated = True
+                    print(widget['properties'].get('title'), "updated")
+                    
+                else:
+                    print(widget['properties'].get('title'), "not updated")
 
-                new_query = ' | '.join(query_in_list)
-                print(new_query)
-
-                widget['properties']['query'] = new_query
-                updated = True
-
+print()
 if not updated:
     print("No widgets were updated.")
+
+print()
 
 updated_dashboard_body = json.dumps(dashboard_body)
 
@@ -115,7 +124,7 @@ try:
         DashboardName=dashboard_use,
         DashboardBody=updated_dashboard_body
     )
-    print("Dashboard updated successfully")
+    print("Dashboard updated successfully\n")
     print(response)
 except Exception as e:
     print(f"An error occurred while updating the dashboard: {e}")

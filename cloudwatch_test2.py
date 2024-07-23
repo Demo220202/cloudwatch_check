@@ -109,7 +109,7 @@ if maxCountSource < 50:
                         count_source = count_source + 1
                 
                 if new_source not in query_in_list:  # Agar wo pehle se exist nahi karta hoga to
-                    query_in_list.insert(count_source, new_source) # replace 0 by count_source
+                    query_in_list.insert(count_source, new_source) # replace 0 by count_source, if you want to see the latest log group at the top
 
                     print("\nNew Query in list format: ", query_in_list)
 

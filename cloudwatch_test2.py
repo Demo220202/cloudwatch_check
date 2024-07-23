@@ -3,26 +3,25 @@ import boto3
 import json
 import argparse
 
-parser = argparse.ArgumentParser(description="My Script Description")
+parser = argparse.ArgumentParser(description="Adding CloudWatch Metrics")
 parser.add_argument('--aws-access-key-id', required=True, help="AWS Access Key ID")
 parser.add_argument('--aws-secret-access-key', required=True, help="AWS Secret Access Key")
 parser.add_argument('--domain', required=True, help="Domain name")
+parser.add_argument('--region-name', required=True, help="AWS Region Name")
 
 args = parser.parse_args()
 
 # Fetch and print AWS credentials
 aws_access_key_id = args.aws_access_key_id
 aws_secret_access_key = args.aws_secret_access_key
-
-print(f"AWS Access Key ID: {aws_access_key_id}")
-print(f"AWS Secret Access Key: {aws_secret_access_key}")
+region_name = args.region_name
 
 # Capitalize the first letter of the domain name
 source_identifier = args.domain.capitalize()[0]
 source_identifier_fullname = args.domain
 print(f"Source Identifier: {source_identifier_fullname}")
 
-region_name = 'us-west-2'
+# region_name = 'us-west-2'
 
 # Initialize a boto3 session
 session = boto3.Session(
@@ -35,25 +34,18 @@ client = session.client('cloudwatch')
 
 # Fetch all dashboards using pagination
 dashboards = []
-response = client.list_dashboards()
+response = client.list_dashboards(
+    DashboardNamePrefix='Zen_Error_Analysis'
+)
 dashboards.extend(response['DashboardEntries'])
 
-while 'NextToken' in response:
-    response = client.list_dashboards(NextToken=response['NextToken'])
-    dashboards.extend(response['DashboardEntries'])
-
-# Print the names of all dashboards
-list_all_dashboard = []
-
 print("Dashboard Names:")
-for dashboard in dashboards:
-    if dashboard['DashboardName'].startswith("Zen_Error_Analysis"):
-        print(dashboard['DashboardName'])
-        list_all_dashboard.append(dashboard['DashboardName'])
+
+list_all_dashboard = [dashboard['DashboardName'] for dashboard in dashboards]
 
 print(list_all_dashboard)
 
-title_to_skip = ["SSO Conf Error"]
+titles_to_skip = ["SSO Conf Error"]
 
 dashboard_use = ""
 
@@ -81,7 +73,7 @@ for widget in dashboard_body.get('widgets', []):
     print()
     count_source = 0
     if widget['type'] == 'log':
-        if widget['properties'].get('title') not in title_to_skip:
+        if widget['properties'].get('title') not in titles_to_skip:
             query = widget['properties'].get('query', '')
             print(f"Old Query: {query}")
 

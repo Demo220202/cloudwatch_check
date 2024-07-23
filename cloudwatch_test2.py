@@ -21,7 +21,6 @@ source_identifier = args.domain.capitalize()[0]
 source_identifier_fullname = args.domain
 print(f"Source Identifier: {source_identifier_fullname}")
 
-# region_name = 'us-west-2'
 
 # Initialize a boto3 session
 session = boto3.Session(
@@ -54,7 +53,7 @@ for dashboard in list_all_dashboard:
         if source_identifier >= dashboard[19] and source_identifier <= dashboard[24]:
             dashboard_use = dashboard
     elif len(dashboard) == 20:
-        if source_identifier >= dashboard[19]:
+        if source_identifier == dashboard[19]:
             dashboard_use = dashboard
 
 print(dashboard_use)
@@ -67,39 +66,56 @@ except client.exceptions.ResourceNotFoundException:
     exit(1)
 
 updated = False
-# count_source = 0
 
+# Count the max source for the check
+maxCountSource = 0
 for widget in dashboard_body.get('widgets', []):
-    print()
     count_source = 0
     if widget['type'] == 'log':
+        # For skipping the title that is not required
         if widget['properties'].get('title') not in titles_to_skip:
             query = widget['properties'].get('query', '')
-            print(f"Old Query: {query}")
 
             query_in_list = query.split(' | ')
-            print(query_in_list)
 
+            # Check no of sources
             for components in query_in_list:
                 if "SOURCE" in components:
                     count_source = count_source + 1
 
-            print(count_source)
 
-            if count_source < 50:
-                new_source = f"SOURCE 'PhpAppLogs_{source_identifier_fullname}'" # to be changed to f"SOURCE 'PhpAppLogs_{source_identifier_fullname}'" in prod level
-                if new_source not in query_in_list:
-                    query_in_list.insert(count_source, new_source)
+            maxCountSource = max(maxCountSource, count_source)
 
-                    print(query_in_list)
-    
+print("Maximum number of sources till now : ", maxCountSource)
+
+# only if all the widgets have sources less than 50
+if maxCountSource < 50:
+    for widget in dashboard_body.get('widgets', []):
+        print()
+        count_source = 0
+        new_source = f"SOURCE 'PhpAppLogs_{source_identifier_fullname}'"
+        if widget['type'] == 'log':
+            # For skipping the title that is not required
+            if widget['properties'].get('title') not in titles_to_skip:
+                query = widget['properties'].get('query', '')
+                print(f"Old Query: {query}")
+
+                query_in_list = query.split(' | ')
+
+                print("\nQuery is list format: ", query_in_list)
+
+                if new_source not in query_in_list:  # Agar wo pehle se exist nahi karta hoga to
+                    query_in_list.insert(count_source, new_source) # replace 0 by count_source
+
+                    print("\nNew Query in list format: ", query_in_list)
+
                     new_query = ' | '.join(query_in_list)
-                    print(new_query)
-    
+                    print("\nNew Query: ", new_query)
+
                     widget['properties']['query'] = new_query
                     updated = True
                     print(widget['properties'].get('title'), "updated")
-                    
+
                 else:
                     print(widget['properties'].get('title'), "not updated")
 
@@ -108,9 +124,9 @@ if not updated:
     print("No widgets were updated.")
 
 print()
-
 updated_dashboard_body = json.dumps(dashboard_body)
 
+# Step 3: Update the dashboard with the modified widgets i.e., the new added log group
 try:
     response = client.put_dashboard(
         DashboardName=dashboard_use,

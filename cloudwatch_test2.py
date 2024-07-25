@@ -16,9 +16,6 @@ aws_access_key_id = args.aws_access_key_id
 aws_secret_access_key = args.aws_secret_access_key
 region_name = args.region_name
 
-print(aws_access_key_id)
-print(aws_secret_access_key)
-
 # Capitalize the first letter of the domain name
 source_identifier = args.domain.capitalize()[0]
 source_identifier_fullname = args.domain

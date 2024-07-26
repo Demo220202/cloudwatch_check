@@ -134,3 +134,8 @@ with open("dashboard_update_info.json", "w") as f:
         "dashboard_name": dashboard_use,
         "updated_dashboard_body": updated_dashboard_body
     }, f)
+
+# Status File
+with open('update_status.txt', 'w') as status_file:
+    status_file.write(str(updated))
+
